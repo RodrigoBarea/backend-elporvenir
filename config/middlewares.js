@@ -19,8 +19,8 @@ module.exports = ({ env }) => [
   {
     name: 'strapi::cors',
     config: {
-     //origin: ['https://frontend-inmobiliaria.vercel.app'], // Desactivado temporalmente: permite solicitudes solo desde el frontend en producción (Vercel) // <- importante
-       origin: ['http://localhost:1337', 'http://localhost:3000'],
+     origin: ['https://frontend-inmobiliaria.vercel.app'], // Desactivado temporalmente: permite solicitudes solo desde el frontend en producción (Vercel) // <- importante
+      //origin: ['http://localhost:1337', 'http://localhost:3000'],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization'],
       credentials: true,
