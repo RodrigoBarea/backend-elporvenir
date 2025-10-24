@@ -6,9 +6,9 @@ module.exports = ({ env }) => [
       contentSecurityPolicy: {
         useDefaults: true,
         directives: {
-          'connect-src': ["'self'", 'https:', 'https://frontend-inmobiliaria.vercel.app'],
+          'connect-src': ["'self'", 'https:', 'https://frontend-inmobiliaria.vercel.app'], // Permitir frontend en Vercel
           'script-src': ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net', 'api.mapbox.com'],
-          'img-src': ["'self'", 'data:', 'blob:'],
+          'img-src': ["'self'", 'data:', 'blob:', 'res.cloudinary.com'], // Si usas Cloudinary
           'media-src': ["'self'", 'data:', 'blob:'],
           'worker-src': ['blob:'],
           upgradeInsecureRequests: null,
@@ -19,8 +19,11 @@ module.exports = ({ env }) => [
   {
     name: 'strapi::cors',
     config: {
-     //origin: ['https://frontend-inmobiliaria.vercel.app'], // Desactivado temporalmente: permite solicitudes solo desde el frontend en producción (Vercel) // <- importante
-      origin: ['http://localhost:1337', 'http://localhost:3000'],
+      origin: [
+        'http://localhost:1337', // Desarrollo local
+        'http://localhost:3000', // Desarrollo local
+        'https://frontend-inmobiliaria.vercel.app', // Producción en Vercel
+      ],
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization'],
       credentials: true,
@@ -34,4 +37,3 @@ module.exports = ({ env }) => [
   'strapi::favicon',
   'strapi::public',
 ];
-
