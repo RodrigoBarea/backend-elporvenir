@@ -1,0 +1,279 @@
+diff --git a/node_modules/strapi-plugin-map-field/admin/src/components/MapInput/index.js b/node_modules/strapi-plugin-map-field/admin/src/components/MapInput/index.js
+index 0e3d337..7a7111b 100644
+--- a/node_modules/strapi-plugin-map-field/admin/src/components/MapInput/index.js
++++ b/node_modules/strapi-plugin-map-field/admin/src/components/MapInput/index.js
+@@ -1,14 +1,19 @@
+ import React, { useState } from 'react';
+ import { useIntl } from 'react-intl';
+ import { Stack, Typography, TextInput, Grid, GridItem, Status } from '@strapi/design-system';
+-import Map, {FullscreenControl, GeolocateControl, Marker, NavigationControl} from 'react-map-gl';
++import Map, { FullscreenControl, GeolocateControl, Marker, NavigationControl } from 'react-map-gl';
+ import GeocoderControl from './geocoder-control';
+ import mbxGeocoding from '@mapbox/mapbox-sdk/services/geocoding'
+ import getTranslation from '../../utils/getTrad';
+ 
+ import 'mapbox-gl/dist/mapbox-gl.css';
+ 
+-const TOKEN = process.env.STRAPI_ADMIN_MAPBOX_ACCESS_TOKEN
++const TOKEN = process.env.STRAPI_ADMIN_MAPBOX_ACCESS_TOKEN;
++
++// === Ajusta estos defaults para que coincidan con tu config/plugins.js ===
++// Ejemplo: Trinidad, Beni
++const DEFAULT_CENTER = { lng: -64.729, lat: -21.535};
++const DEFAULT_ZOOM = 15;
+ 
+ const MapField = ({
+   intlLabel,
+@@ -18,119 +23,159 @@ const MapField = ({
+ }) => {
+ 
+   if (!TOKEN) {
+-    return (<Status variant="danger" showBullet={false}>
+-             <Typography fontWeight="bold">Map field cannot be displayed! </Typography> <Typography>Mapbox access token not found. Please add a STRAPI_ADMIN_MAPBOX_ACCESS_TOKEN environment variable and set it with a valid Mapbox api token.</Typography>
+-           </Status>)
++    return (
++      <Status variant="danger" showBullet={false}>
++        <Typography fontWeight="bold">Map field cannot be displayed! </Typography>{' '}
++        <Typography>
++          Mapbox access token not found. Please add a STRAPI_ADMIN_MAPBOX_ACCESS_TOKEN environment variable and set it with a valid Mapbox api token.
++        </Typography>
++      </Status>
++    );
+   }
+ 
+   const { formatMessage } = useIntl();
+-  const result = value && JSON.parse(value) || null;
+-  const isDefaultViewState = (result == null)
++  const result = (value && JSON.parse(value)) || null;
++  const isDefaultViewState = (result == null);
+ 
+-  const [longitude, setLongitude] = useState(result && result.geometry.coordinates[0] || null);
+-  const [latitude, setLatitude] = useState(result && result.geometry.coordinates[1] || null);
+-  const [address, setAddress] = useState(result && result.place_name || '');
++  const [longitude, setLongitude] = useState(result?.geometry?.coordinates?.[0] ?? null);
++  const [latitude, setLatitude] = useState(result?.geometry?.coordinates?.[1] ?? null);
++  const [address, setAddress] = useState(result?.place_name || '');
+ 
++  // Usar tus defaults cuando no hay valor guardado
+   const [viewState, setViewState] = useState({
+-    longitude: longitude || 15,
+-    latitude: latitude || 45,
+-    zoom: 3.5
++    longitude: longitude ?? DEFAULT_CENTER.lng,
++    latitude: latitude ?? DEFAULT_CENTER.lat,
++    zoom: isDefaultViewState ? DEFAULT_ZOOM : 15
+   });
+ 
+   const handleChange = (evt) => {
+-    const {result} = evt;
+-    if (! result) return;
++    const { result } = evt;
++    if (!result) return;
+     updateValues(result);
+-  }
+-
+-  const reverseGeocode= (evt) => {
+-    evt.preventDefault();
+-
+-    const geocodingService = mbxGeocoding({ accessToken: TOKEN });
+-    geocodingService.reverseGeocode({
+-      query: [evt.lngLat.lng, evt.lngLat.lat]
+-    })
+-      .send()
+-      .then(response => {
+-        const result = response.body.features[0];
+-        if (! result) return;
+-        updateValues(result);
+-    });
+-  }
++  };
++
++  // NUEVO: click que deja el pin EXACTO donde hiciste click.
++  // (Opcional) solo usamos reverse geocode para obtener un place_name legible,
++  // pero SIN cambiar las coordenadas del click.
++  const setPointFromClick = (evt) => {
++    const { lng, lat } = evt.lngLat;
++
++    const commitFeature = (place_name, properties = {}) => {
++      const feature = {
++        type: 'Feature',
++        geometry: { type: 'Point', coordinates: [lng, lat] },
++        place_name: place_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
++        properties: properties || {}
++      };
++      updateValues(feature);
++    };
++
++    try {
++      const geocodingService = mbxGeocoding({ accessToken: TOKEN });
++      geocodingService.reverseGeocode({ query: [lng, lat] })
++        .send()
++        .then(response => {
++          const featureFromAPI = response?.body?.features?.[0] || null;
++          commitFeature(featureFromAPI?.place_name, featureFromAPI?.properties);
++        })
++        .catch(() => {
++          // Si falla el geocoder, igual guardamos coords exactas
++          commitFeature(null, {});
++        });
++    } catch {
++      // Si no hay SDK o algo falla inesperadamente
++      commitFeature(null, {});
++    }
++  };
+ 
+   const updateValues = (result) => {
+     if (!result) return;
+-    const value = JSON.stringify(result);
++    const newValue = JSON.stringify(result);
+ 
+-    setAddress(result.place_name);
+-    setLongitude(result.geometry.coordinates[0]);
+-    setLatitude(result.geometry.coordinates[1]);
+-    onChange({ target: { name, value, type: "json" } });
+-  }
++    setAddress(result.place_name || '');
++    setLongitude(result.geometry?.coordinates?.[0] ?? null);
++    setLatitude(result.geometry?.coordinates?.[1] ?? null);
++    onChange({ target: { name, value: newValue, type: "json" } });
++  };
+ 
+   const flyTo = (evt) => {
++    // Si ya hay valor guardado, centramos allí al cargar
+     if (isDefaultViewState) return;
+     const map = evt.target;
+-    map.flyTo({center: [longitude, latitude], zoom: 15})
+-  }
++    if (longitude != null && latitude != null) {
++      map.flyTo({ center: [longitude, latitude], zoom: 15 });
++    }
++  };
+ 
+   return (
+-  <Stack spacing={4}>
+-    <Typography
+-      textColor="neutral800"
+-      as="label"
+-      variant="pi"
+-      fontWeight="bold"
+-    >
+-      {formatMessage(intlLabel)}
+-    </Typography>
+-
+-    <Map
+-      {...viewState}
+-      onMove={evt => setViewState(evt.viewState)}
+-      onDblClick={reverseGeocode}
+-      onLoad={flyTo}
+-      mapStyle="mapbox://styles/mapbox/streets-v12"
+-      mapboxAccessToken={TOKEN}
+-      attributionControl={false}
+-      style={{ height:"500px", width:"100%" }}
+-    >
+-      <FullscreenControl />
+-      <NavigationControl />
+-      <GeolocateControl />
+-      <GeocoderControl mapboxAccessToken={TOKEN} position="top-left" onResult={handleChange}/>
+-      <Marker longitude={longitude} latitude={latitude} color="#ff5200" />
+-    </Map>
+-
+-    <Grid>
+-      <GridItem padding={1} col={8} xs={12}>
+-        <TextInput label={formatMessage({
+-          id: getTranslation(
+-            'fields.address'
+-          ),
+-          defaultMessage: 'address',
+-        })} name="address" value={address} disabled
+-      />
+-      </GridItem>
+-      <GridItem padding={1} col={2} xs={12}>
+-        <TextInput label={formatMessage({
+-          id: getTranslation(
+-            'fields.longitude'
+-          ),
+-          defaultMessage: 'longitude',
+-        })} name="longitude" value={longitude} disabled />
+-      </GridItem>
+-      <GridItem padding={1} col={2} xs={12}>
+-        <TextInput label={formatMessage({
+-          id: getTranslation(
+-            'fields.latitude'
+-          ),
+-          defaultMessage: 'latitude',
+-        })} name="latitude" value={latitude} disabled />
+-      </GridItem>
+-    </Grid>
+-  </Stack>
++    <Stack spacing={4}>
++      <Typography
++        textColor="neutral800"
++        as="label"
++        variant="pi"
++        fontWeight="bold"
++      >
++        {formatMessage(intlLabel)}
++      </Typography>
++
++      <Map
++        {...viewState}
++        onMove={(evt) => setViewState(evt.viewState)}
++        // ANTES: onDblClick={reverseGeocode}
++        // AHORA: click simple que fija el punto exacto
++        onClick={setPointFromClick}
++        onLoad={flyTo}
++        mapStyle="mapbox://styles/mapbox/streets-v12"
++        mapboxAccessToken={TOKEN}
++        attributionControl={false}
++        style={{ height: "500px", width: "100%" }}
++      >
++        <FullscreenControl />
++        <NavigationControl />
++        <GeolocateControl />
++        <GeocoderControl mapboxAccessToken={TOKEN} position="top-left" onResult={handleChange} />
++        {longitude != null && latitude != null && (
++          <Marker longitude={longitude} latitude={latitude} color="#ff5200" />
++        )}
++      </Map>
++
++      <Grid>
++        <GridItem padding={1} col={8} xs={12}>
++          <TextInput
++            label={formatMessage({
++              id: getTranslation('fields.address'),
++              defaultMessage: 'address',
++            })}
++            name="address"
++            value={address || ''}
++            disabled
++          />
++        </GridItem>
++        <GridItem padding={1} col={2} xs={12}>
++          <TextInput
++            label={formatMessage({
++              id: getTranslation('fields.longitude'),
++              defaultMessage: 'longitude',
++            })}
++            name="longitude"
++            value={longitude ?? ''}
++            disabled
++          />
++        </GridItem>
++        <GridItem padding={1} col={2} xs={12}>
++          <TextInput
++            label={formatMessage({
++              id: getTranslation('fields.latitude'),
++              defaultMessage: 'latitude',
++            })}
++            name="latitude"
++            value={latitude ?? ''}
++            disabled
++          />
++        </GridItem>
++      </Grid>
++    </Stack>
+   );
+-}
++};
+ 
+ export default MapField;
