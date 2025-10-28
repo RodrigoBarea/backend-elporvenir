@@ -23,7 +23,7 @@
     "strapi-plugin-map-field": "1.1.1",
     "strapi-provider-upload-cloudinary": "^3.1.4",
     "styled-components": "5.3.3",
-    "patch-package":"^6.4.7"
+    "patch-package": "^8.0.1"
   },
   "author": {
     "name": "A Strapi developer"
@@ -37,7 +37,6 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "patch-package": "^8.0.1",
     "postinstall-postinstall": "^2.1.0"
   }
 }
