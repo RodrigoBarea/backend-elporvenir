@@ -9,11 +9,13 @@ module.exports = ({ env }) => ({
       geocoder: true,
     },
   },
-  
+
   upload: {
-    provider: 'cloudinary',
-    providerOptions: {
-      cloudinary_url: env('CLOUDINARY_URL'), // Usando la variable de entorno completa
+    config: {
+      provider: 'cloudinary',
+      providerOptions: {
+        cloudinary_url: env('CLOUDINARY_URL'), // Usando la variable de entorno completa
+      },
     },
   },
 });
