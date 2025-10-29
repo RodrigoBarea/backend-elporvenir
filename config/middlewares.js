@@ -10,8 +10,8 @@ module.exports = ({
         directives: {
           'connect-src': ["'self'", 'https:'],
           'script-src': ["'self'", "'unsafe-inline'", 'cdn.jsdelivr.net', 'api.mapbox.com'],
-          'img-src': ["'self'", 'data:', 'blob:' ],
-          'media-src': ["'self'", 'data:', 'blob:'],
+          'img-src': ["'self'", 'data:', 'blob:', 'res.cloudinary.com'],
+          'media-src': ["'self'", 'data:', 'blob:', 'res.cloudinary.com'],
           'worker-src': ['blob:'],
           upgradeInsecureRequests: null,
         },
