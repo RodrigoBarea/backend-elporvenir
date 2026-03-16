@@ -48,59 +48,68 @@
     "estacionamientos": {
       "type": "integer"
     },
-    "descripcion": {
-      "type": "blocks"
-    },
-    "tipo": {
-      "type": "enumeration",
-      "enum": [
-        "Lote",
-        "Casa",
-        "Departamento",
-        "Terreno",
-        "Tienda Comercial"
-      ]
-    },
-    "precio": {
-      "type": "decimal",
-      "precision": 14,
-      "scale": 2
-    },
-    "ubicacion": {
-      "type": "customField",
-      "customField": "plugin::map-field.map"
-    },
-    "active": {
-      "type": "boolean",
-      "default": true
-    },
-    "isFeatured": {
-      "type": "boolean",
-      "default": false
-    },
-    "categoria": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::categoria.categoria"
-    },
-    "agente": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::agente.agente"
-    },
-    "ciudad": {
-      "type": "enumeration",
-      "enum": [
-        "Tarija",
-        "Santa Cruz",
-        "La Paz",
-        "Cochabamba",
-        "Bermejo",
-        "Yacuiba"
-      ]
-    },
-    "frente": {
-      "type": "float"
-    }
+"descripcion": {
+  "type": "blocks",
+  "required": true
+},
+"tipo": {
+  "type": "enumeration",
+  "enum": [
+    "Lote",
+    "Casa",
+    "Departamento",
+    "Terreno",
+    "Tienda Comercial"
+  ],
+  "required": true
+},
+"precio": {
+  "type": "decimal",
+  "precision": 14,
+  "scale": 2,
+  "required": true
+},
+"ubicacion": {
+  "type": "customField",
+  "customField": "plugin::map-field.map",
+  "required": true
+},
+"active": {
+  "type": "boolean",
+  "default": true,
+  "required": true
+},
+"isFeatured": {
+  "type": "boolean",
+  "default": false,
+  "required": true
+},
+"categoria": {
+  "type": "relation",
+  "relation": "oneToOne",
+  "target": "api::categoria.categoria",
+  "required": true
+},
+"agente": {
+  "type": "relation",
+  "relation": "oneToOne",
+  "target": "api::agente.agente",
+  "required": true
+},
+"ciudad": {
+  "type": "enumeration",
+  "enum": [
+    "Tarija",
+    "Santa Cruz",
+    "La Paz",
+    "Cochabamba",
+    "Bermejo",
+    "Yacuiba"
+  ],
+  "required": true
+},
+"frente": {
+  "type": "float"
+}
   }
 }
